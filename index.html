@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RVS Report Dashboard</title>
+<style>
+  /* ── Reset & tokens ──────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red:       #c8102e;
+    --red-dark:  #9e0c24;
+    --navy:      #1a2332;
+    --navy-mid:  #243044;
+    --blue:      #2d6be4;
+    --blue-lt:   #e8f0fd;
+    --green:     #1a9e5c;
+    --amber:     #e68c1a;
+    --surface:   #f5f6f8;
+    --card:      #ffffff;
+    --border:    #e2e5ea;
+    --text:      #1a2332;
+    --text-2:    #5a6474;
+    --text-3:    #8a92a0;
+    --radius:    10px;
+    --shadow:    0 1px 4px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.07);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Header ──────────────────────────────────────────────── */
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  }
+  .logo {
+    height: 44px;
+    display: flex; align-items: center;
+    flex-shrink: 0;
+  }
+  .logo img { height: 44px; width: auto; display: block; }
+  header h1 { font-size: 16px; font-weight: 600; letter-spacing: .01em; flex: 1; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  #auth-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1.5px solid rgba(255,255,255,.35);
+    background: transparent;
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  #auth-btn:hover { background: rgba(255,255,255,.1); }
+  #auth-btn.signed-in {
+    border-color: var(--green);
+    color: #6ee7b7;
+  }
+  #user-name { font-size: 13px; color: rgba(255,255,255,.65); }
+
+  /* ── Layout ──────────────────────────────────────────────── */
+  main { max-width: 1200px; margin: 0 auto; padding: 24px 20px 48px; }
+
+  /* ── Filter bar ──────────────────────────────────────────── */
+  .filter-bar {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 24px;
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 5px; }
+  .filter-group label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-2); }
+  select {
+    padding: 8px 32px 8px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a6474' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+    appearance: none;
+    cursor: pointer;
+    min-width: 180px;
+    transition: border-color .15s;
+  }
+  select:focus { outline: none; border-color: var(--blue); }
+  select:disabled { opacity: .45; cursor: not-allowed; }
+
+
+  #refresh-btn {
+    margin-left: auto;
+    padding: 8px 18px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: background .15s;
+  }
+  #refresh-btn:hover { background: #1f55c4; }
+  #refresh-btn:disabled { opacity: .5; cursor: not-allowed; }
+  #refresh-btn svg { animation: none; }
+  #refresh-btn.loading svg { animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Auth gate ───────────────────────────────────────────── */
+  #auth-gate {
+    text-align: center;
+    padding: 80px 20px;
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  #auth-gate h2 { font-size: 22px; margin-bottom: 10px; }
+  #auth-gate p { color: var(--text-2); margin-bottom: 28px; }
+  #auth-gate button {
+    padding: 12px 28px;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  #auth-gate button:hover { background: var(--red-dark); }
+
+  /* ── Stats grid ──────────────────────────────────────────── */
+  .stats-section { margin-bottom: 28px; }
+  .stats-section h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--text-2); margin-bottom: 12px; }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    display: flex; flex-direction: column; gap: 4px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent, var(--blue));
+  }
+  .stat-card .label { font-size: 12px; color: var(--text-2); font-weight: 500; line-height: 1.3; }
+  .stat-card .value { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1.1; }
+  .stat-card.complete { --accent: var(--green); }
+  .stat-card.complete .value { color: var(--green); }
+  .stat-card.dns { --accent: var(--text-3); }
+  .stat-card.dns .value { color: var(--text-3); }
+  .stat-card.phase { --accent: var(--blue); }
+  .stat-card.facility { --accent: var(--red); }
+
+  .skeleton .value { background: var(--border); color: transparent; border-radius: 4px; }
+  .skeleton .label { background: var(--surface); color: transparent; border-radius: 3px; }
+
+  .stat-card.healthcare-combined {
+    --accent: #0891b2;
+    background: #f0f9ff;
+    border-color: #bae6fd;
+  }
+  .stat-card.healthcare-combined .label { font-size: 12px; font-weight: 600; color: #0369a1; }
+  .stat-card.healthcare-combined .value { font-size: 26px; color: #0369a1; }
+  .healthcare-breakdown {
+    display: flex; flex-direction: column; gap: 2px;
+    font-size: 11px; color: #0369a1; opacity: .8; margin-top: 4px;
+  }
+  .healthcare-breakdown span { white-space: nowrap; }
+
+  .stat-card.schools-combined {
+    --accent: #7c3aed;
+    background: #f5f3ff;
+    border-color: #ddd6fe;
+  }
+  .stat-card.schools-combined .label { font-size: 12px; font-weight: 600; color: #6d28d9; }
+  .stat-card.schools-combined .value { font-size: 26px; color: #6d28d9; }
+  .stat-card.schools-combined .healthcare-breakdown { color: #6d28d9; }
+
+  .stat-card.community-combined {
+    --accent: #059669;
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+  }
+  .stat-card.community-combined .label { font-size: 12px; font-weight: 600; color: #065f46; }
+  .stat-card.community-combined .value { font-size: 26px; color: #065f46; }
+  .stat-card.community-combined .healthcare-breakdown { color: #065f46; }
+
+  /* ── Three-col dashboard layout ─────────────────────────── */
+  .dashboard-body {
+    display: grid;
+    grid-template-columns: 220px 1fr 220px;
+    gap: 20px;
+    align-items: start;
+    margin-bottom: 28px;
+  }
+  @media (max-width: 900px) {
+    .dashboard-body { grid-template-columns: 1fr; }
+  }
+
+  .stats-col h2 {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--text-2); margin-bottom: 10px;
+  }
+  .stats-grid {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .stat-card { padding: 12px 14px; }
+  .stat-card .value { font-size: 26px; }
+
+  /* ── Report links ────────────────────────────────────────── */
+  .reports-section h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-2); margin-bottom: 10px; }
+  .reports-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .report-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-sm);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .report-card .report-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .report-card .report-icon {
+    width: 32px; height: 32px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .report-card .report-links { display: flex; flex-direction: column; gap: 6px; }
+  .report-card .report-links.inline { flex-direction: row; }
+  .report-card .report-links.inline .report-link { flex: 1; justify-content: center; }
+  .report-link {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px;
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--blue);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background .15s;
+    border: 1px solid var(--border);
+  }
+  .report-link:hover { background: var(--blue-lt); border-color: var(--blue); }
+  .report-link svg { flex-shrink: 0; }
+  .report-link.disabled { color: var(--text-3); pointer-events: none; opacity: .55; }
+
+  /* ── Config note ─────────────────────────────────────────── */
+  .config-note {
+    background: #fffbeb;
+    border: 1px solid #f5d060;
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #7a5c00;
+    margin-bottom: 20px;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .config-note code { background: rgba(0,0,0,.07); border-radius: 3px; padding: 1px 5px; font-family: monospace; }
+
+  /* ── Context label ───────────────────────────────────────── */
+  #context-label {
+    font-size: 13px; color: var(--text-2); margin-left: 4px;
+  }
+  .context-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--blue-lt); color: var(--blue);
+    border-radius: 20px; padding: 2px 10px;
+    font-size: 12px; font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img src="https://cusec.org/wp-content/uploads/cropped-cusec_logo_512-270x270.png" alt="CUSEC Logo">
+  </div>
+  <h1>RVS Report &amp; Status Dashboard</h1>
+  <div class="header-right">
+    <span id="user-name"></span>
+    <button id="auth-btn" onclick="handleAuth()">Sign in with ArcGIS</button>
+  </div>
+</header>
+
+<main id="main-content">
+
+  <!-- Config warning if client_id not set -->
+  <div class="config-note" id="config-note" style="display:none">
+    ⚠️ Set your ArcGIS OAuth <strong>Client ID</strong> to enable sign-in. Open this file and change <code>ARCGIS_CLIENT_ID</code> near the top of the script, then register <code id="redirect-display"></code> as a redirect URI in your ArcGIS app settings.
+  </div>
+
+  <!-- Auth gate -->
+  <div id="auth-gate">
+    <h2>Sign in to access the dashboard</h2>
+    <p>Your ArcGIS credentials are used to query the CUSEC RVS feature service.</p>
+    <button onclick="handleAuth()">Sign in with ArcGIS Online</button>
+  </div>
+
+  <!-- Dashboard (hidden until authenticated) -->
+  <div id="dashboard" style="display:none">
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label>State</label>
+        <select id="state-select" onchange="onStateChange()">
+          <option value="">— All States —</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>County</label>
+        <select id="county-select" onchange="onCountyChange()" disabled>
+          <option value="">— Select state first —</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Showing Data For</label>
+        <span id="context-label" class="context-chip">All States</span>
+      </div>
+      <button id="refresh-btn" onclick="loadData()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+
+    <!-- Three-column body -->
+    <div class="dashboard-body">
+
+      <!-- Left: Phase stats -->
+      <div class="stats-col">
+        <h2>Survey Phase</h2>
+        <div class="stats-grid" id="phase-grid"></div>
+      </div>
+
+      <!-- Center: Reports -->
+      <div class="reports-section">
+        <h2>Generate Reports</h2>
+        <div class="reports-grid" id="reports-grid"></div>
+      </div>
+
+      <!-- Right: Essential Facilities -->
+      <div class="stats-col">
+        <h2>Essential Facilities <span style="font-weight:400;color:var(--green);text-transform:none;letter-spacing:0">(Complete)</span></h2>
+        <div class="stats-grid" id="facility-grid"></div>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// CONFIGURATION — update ARCGIS_CLIENT_ID with your app's ID
+// Register this page's URL as a redirect URI in your ArcGIS
+// app settings (https://developers.arcgis.com/applications).
+// ─────────────────────────────────────────────────────────────
+const ARCGIS_CLIENT_ID  = 'wABmvoplhiLmzBmi';
+const ARCGIS_PORTAL_URL = 'https://www.arcgis.com';
+const FEATURE_SERVICE   = 'https://services3.arcgis.com/mQsIDpmRUmYltsYD/ArcGIS/rest/services/CUSEC_RVS_All/FeatureServer/0';
+
+// Batch Combined Report — update item IDs to match your ArcGIS print templates
+const BATCH_P154_ITEM_ID          = 'f230e33babf54301a0c2cabdf94ff09a';
+const BATCH_NONSTRUCTURAL_ITEM_ID = 'f230e33babf54301a0c2cabdf94ff09a';
+
+// Report endpoint map
+const REPORTS = [
+  {
+    id: 'hazus',
+    title: 'HAZUS Spreadsheet',
+    icon: '📊',
+    color: '#2d6be4',
+    bg: '#e8f0fd',
+    spreadsheet: 'https://q3tmgjj6lb.execute-api.us-east-2.amazonaws.com/default/RVS_Hazus_Spreadsheet_REST',
+    report: null,
+  },
+  {
+    id: 'summary',
+    title: 'Summary Spreadsheet',
+    icon: '📋',
+    color: '#7c3aed',
+    bg: '#ede9fe',
+    spreadsheet: 'https://lyxgcyc2g7.execute-api.us-east-2.amazonaws.com/default/RVS_Summary_Spreadsheet_REST',
+    report: null,
+  },
+  {
+    id: 'engineer',
+    title: 'Engineer Spreadsheet',
+    icon: '🏗️',
+    color: '#0891b2',
+    bg: '#e0f2fe',
+    spreadsheet: 'https://tgjl7y9z1g.execute-api.us-east-2.amazonaws.com/default/RVS_Engineer_Spreadsheet_REST',
+    report: null,
+  },
+  {
+    id: 'generator',
+    title: 'Generator Report',
+    icon: '⚡',
+    color: '#d97706',
+    bg: '#fef3c7',
+    spreadsheet: 'https://3kjz4w21t7.execute-api.us-east-2.amazonaws.com/default/RVS_Generator_Spreadsheet_REST',
+    report:       'https://jld917cpb8.execute-api.us-east-2.amazonaws.com/default/RVS_Generator_Report_REST',
+  },
+  {
+    id: 'gasshutoff',
+    title: 'Gas Shutoff Report',
+    icon: '🔥',
+    color: '#dc2626',
+    bg: '#fee2e2',
+    spreadsheet: 'https://kzgupcsmbb.execute-api.us-east-2.amazonaws.com/default/RVS_GasShutoff_Spreadsheet_REST',
+    report:       'https://q5pgy55ndl.execute-api.us-east-2.amazonaws.com/default/RVS_GasShutoff_Report_REST',
+  },
+  {
+    id: 'batch',
+    title: 'Batch Combined Report',
+    icon: '📦',
+    color: '#059669',
+    bg: '#ecfdf5',
+    spreadsheet: null,
+    report: 'https://gxfyya450a.execute-api.us-east-2.amazonaws.com/default/RVS_Batch_Combined_REST',
+    extraParams: () => ({ p154_itemid: BATCH_P154_ITEM_ID, nonstructural_itemid: BATCH_NONSTRUCTURAL_ITEM_ID }),
+  },
+];
+
+const PHASE_ORDER    = ['Prepopulate','Field','Post Data Collection','QA/QC','Engineer Review','Complete','DNS'];
+const FACILITY_ORDER = ['Emergency Operations Centers','Fire/Emergency Medical','Government Admin. Offices','Hospitals','Law Enforcement','Medical Offices/Clinics','Nursing Homes','Schools','Universities','Utility/Public Works','Other'];
+const PHASE_FIELD    = 'Phase';
+const FACILITY_FIELD = 'EssentialFacility';
+
+// ── State ────────────────────────────────────────────────────
+let token    = null;
+let username = null;
+// scope is derived automatically: county selected → 'county', otherwise 'statewide'
+function getScope() { return selCounty ? 'county' : 'statewide'; }
+let selState  = '';
+let selCounty = '';
+
+// ── OAuth helpers ─────────────────────────────────────────────
+function getRedirectUri() {
+  return window.location.href.split('#')[0].split('?')[0];
+}
+
+function handleAuth() {
+  if (token) { signOut(); return; }
+  if (ARCGIS_CLIENT_ID === 'YOUR_CLIENT_ID_HERE') {
+    alert('Please set your ArcGIS Client ID in the script configuration at the top of this file.');
+    return;
+  }
+  const authUrl = `${ARCGIS_PORTAL_URL}/sharing/rest/oauth2/authorize`
+    + `?client_id=${encodeURIComponent(ARCGIS_CLIENT_ID)}`
+    + `&response_type=token`
+    + `&redirect_uri=${encodeURIComponent(getRedirectUri())}`
+    + `&expiration=120`;
+  window.location.href = authUrl;
+}
+
+function parseTokenFromHash() {
+  const hash = window.location.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  return {
+    access_token: params.get('access_token'),
+    username:     params.get('username'),
+  };
+}
+
+async function getSelfInfo(tok) {
+  const r = await fetch(`${ARCGIS_PORTAL_URL}/sharing/rest/community/self?f=json&token=${tok}`);
+  const j = await r.json();
+  return j.fullName || j.username || '';
+}
+
+function signOut() {
+  token = null; username = null;
+  sessionStorage.removeItem('rvs_token');
+  sessionStorage.removeItem('rvs_user');
+  updateAuthUI();
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('auth-gate').style.display  = '';
+}
+
+function updateAuthUI() {
+  const btn  = document.getElementById('auth-btn');
+  const name = document.getElementById('user-name');
+  if (token) {
+    btn.textContent = 'Sign Out';
+    btn.classList.add('signed-in');
+    name.textContent = username || '';
+  } else {
+    btn.textContent = 'Sign in with ArcGIS';
+    btn.classList.remove('signed-in');
+    name.textContent = '';
+  }
+}
+
+// ── Feature service queries ───────────────────────────────────
+async function queryFS(params) {
+  const url = `${FEATURE_SERVICE}/query`;
+  const body = new URLSearchParams({ f: 'json', token, ...params });
+  const r = await fetch(url, { method: 'POST', body });
+  const j = await r.json();
+  if (j.error) throw new Error(j.error.message);
+  return j;
+}
+
+async function fetchStates() {
+  const j = await queryFS({
+    where: '1=1',
+    outFields: 'State',
+    returnDistinctValues: true,
+    orderByFields: 'State ASC',
+    returnGeometry: false,
+  });
+  return j.features.map(f => f.attributes.State).filter(Boolean).sort();
+}
+
+async function fetchCounties(state) {
+  const j = await queryFS({
+    where: `State='${state.replace(/'/g,"''")}'`,
+    outFields: 'County',
+    returnDistinctValues: true,
+    orderByFields: 'County ASC',
+    returnGeometry: false,
+  });
+  return j.features.map(f => f.attributes.County).filter(Boolean).sort();
+}
+
+async function fetchGroupStats(field, where) {
+  const j = await queryFS({
+    where,
+    outFields: '',
+    groupByFieldsForStatistics: field,
+    outStatistics: JSON.stringify([{ statisticType:'count', onStatisticField: field, outStatisticFieldName:'cnt' }]),
+    returnGeometry: false,
+  });
+  const map = {};
+  (j.features || []).forEach(f => {
+    const key = f.attributes[field];
+    const val = f.attributes.cnt || f.attributes.CNT || 0;
+    if (key) map[key] = val;
+  });
+  return map;
+}
+
+// ── Build WHERE clause ────────────────────────────────────────
+function buildWhere() {
+  const parts = [];
+  if (selState)  parts.push(`State='${selState.replace(/'/g,"''")}'`);
+  if (selCounty) parts.push(`County='${selCounty.replace(/'/g,"''")}'`);
+  return parts.length ? parts.join(' AND ') : '1=1';
+}
+
+// ── Render helpers ────────────────────────────────────────────
+function statCard(label, value, cls) {
+  return `<div class="stat-card ${cls}">
+    <div class="label">${label}</div>
+    <div class="value">${Number(value).toLocaleString()}</div>
+  </div>`;
+}
+
+function skeletonGrid(n) {
+  return Array.from({length:n}, () =>
+    `<div class="stat-card skeleton"><div class="label">███████</div><div class="value">———</div></div>`
+  ).join('');
+}
+
+function renderPhase(counts) {
+  return PHASE_ORDER.map(p => {
+    const cls = p === 'Complete' ? 'phase complete' : p === 'DNS' ? 'phase dns' : 'phase';
+    return statCard(p, counts[p] ?? 0, cls);
+  }).join('');
+}
+
+function combinedCard(label, total, breakdown, cls) {
+  const rows = breakdown.map(([k,v]) =>
+    `<span>${k}: ${Number(v).toLocaleString()}</span>`).join('');
+  return `<div class="stat-card facility ${cls}">
+    <div class="label">${label}</div>
+    <div class="value">${Number(total).toLocaleString()}</div>
+    <div class="healthcare-breakdown">${rows}</div>
+  </div>`;
+}
+
+function renderFacility(counts) {
+  const c = k => counts[k] ?? 0;
+
+  const healthcareTotal   = c('Hospitals') + c('Medical Offices/Clinics') + c('Nursing Homes');
+  const schoolsTotal      = c('Schools') + c('Universities');
+  const communityTotal    = c('Government Admin. Offices') + c('Utility/Public Works') + c('Other');
+
+  // Order matches original dashboard: EOCs, Fire, Healthcare, Law Enforcement, Schools, Community Services
+  return [
+    statCard('Emergency Operations Centers', c('Emergency Operations Centers'), 'facility'),
+    statCard('Fire/Emergency Medical',        c('Fire/Emergency Medical'),        'facility'),
+    combinedCard('Healthcare', healthcareTotal, [
+      ['Hospitals',              c('Hospitals')],
+      ['Medical Offices/Clinics',c('Medical Offices/Clinics')],
+      ['Nursing Homes',          c('Nursing Homes')],
+    ], 'healthcare-combined'),
+    statCard('Law Enforcement', c('Law Enforcement'), 'facility'),
+    combinedCard('Schools', schoolsTotal, [
+      ['Schools',      c('Schools')],
+      ['Universities', c('Universities')],
+    ], 'schools-combined'),
+    combinedCard('Community Services', communityTotal, [
+      ['Govt. Admin. Offices', c('Government Admin. Offices')],
+      ['Utility/Public Works', c('Utility/Public Works')],
+      ['Other',                c('Other')],
+    ], 'community-combined'),
+  ].join('');
+}
+
+function buildReportUrl(base, st, co, isStatewide, extra = {}) {
+  const params = new URLSearchParams({ state: st || '' });
+  params.set('county', isStatewide ? 'Statewide' : (co || ''));
+  Object.entries(extra).forEach(([k, v]) => { if (v) params.set(k, v); });
+  return `${base}?${params}`;
+}
+
+function renderReports() {
+  const isStatewide = getScope() === 'statewide';
+  const st = selState;
+  const co = selCounty;
+  const noState = !st;
+
+  const grid = document.getElementById('reports-grid');
+  grid.innerHTML = REPORTS.map(r => {
+    const requiresCounty = !!r.extraParams;
+    const sheetUrl = (r.spreadsheet && st) ? buildReportUrl(r.spreadsheet, st, co, isStatewide) : null;
+    const repUrl   = (r.report && st && (!requiresCounty || co))
+      ? buildReportUrl(r.report, st, co, isStatewide, r.extraParams ? r.extraParams() : {})
+      : null;
+
+    const sheetIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+    const repIcon  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>`;
+
+    const sheetLink = !r.spreadsheet ? '' : sheetUrl
+      ? `<a href="${sheetUrl}" target="_blank" rel="noopener" class="report-link">${sheetIcon} Spreadsheet</a>`
+      : `<span class="report-link disabled">${sheetIcon} Select a state first</span>`;
+
+    const reportDisabledMsg = requiresCounty && st && !co
+      ? 'Select a county first'
+      : 'Select a state first';
+    const reportLink = r.report
+      ? (repUrl
+          ? `<a href="${repUrl}" target="_blank" rel="noopener" class="report-link">${repIcon} Document Report</a>`
+          : `<span class="report-link disabled">${repIcon} ${reportDisabledMsg}</span>`)
+      : '';
+
+    const inline = r.report ? 'inline' : '';
+
+    return `<div class="report-card">
+      <div class="report-title">
+        <div class="report-icon" style="background:${r.bg};color:${r.color};font-size:16px">${r.icon}</div>
+        ${r.title}
+      </div>
+      <div class="report-links ${inline}">
+        ${sheetLink}
+        ${reportLink}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Context label ─────────────────────────────────────────────
+function updateContextLabel() {
+  const el = document.getElementById('context-label');
+  if (!selState) { el.textContent = 'All States'; return; }
+  if (!selCounty) {
+    el.textContent = selState + ' — Statewide';
+  } else {
+    el.textContent = `${selState} — ${selCounty} County`;
+  }
+}
+
+// ── Main data load ────────────────────────────────────────────
+async function loadData() {
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  btn.classList.add('loading');
+
+  const where = buildWhere();
+
+  // show skeletons
+  document.getElementById('phase-grid').innerHTML    = skeletonGrid(7);
+  document.getElementById('facility-grid').innerHTML = skeletonGrid(6);
+
+  try {
+    const facilityWhere = where === '1=1'
+      ? `${PHASE_FIELD}='Complete'`
+      : `${where} AND ${PHASE_FIELD}='Complete'`;
+
+    const [phaseStats, facilityStats] = await Promise.all([
+      fetchGroupStats(PHASE_FIELD,    where),
+      fetchGroupStats(FACILITY_FIELD, facilityWhere),
+    ]);
+    document.getElementById('phase-grid').innerHTML    = renderPhase(phaseStats);
+    document.getElementById('facility-grid').innerHTML = renderFacility(facilityStats);
+  } catch(e) {
+    document.getElementById('phase-grid').innerHTML    = `<div style="color:red;font-size:13px;grid-column:1/-1">Error: ${e.message}</div>`;
+    document.getElementById('facility-grid').innerHTML = '';
+  }
+
+  renderReports();
+  updateContextLabel();
+  btn.disabled = false;
+  btn.classList.remove('loading');
+}
+
+// ── Dropdown change handlers ──────────────────────────────────
+async function onStateChange() {
+  selState  = document.getElementById('state-select').value;
+  selCounty = '';
+  const countySelect = document.getElementById('county-select');
+  countySelect.disabled = true;
+  countySelect.innerHTML = '<option value="">Loading…</option>';
+
+  if (selState) {
+    const counties = await fetchCounties(selState);
+    countySelect.innerHTML = '<option value="">— All Counties —</option>'
+      + counties.map(c => `<option value="${c}">${c}</option>`).join('');
+    countySelect.disabled = false;
+  } else {
+    countySelect.innerHTML = '<option value="">— Select state first —</option>';
+  }
+  loadData();
+}
+
+function onCountyChange() {
+  selCounty = document.getElementById('county-select').value;
+  loadData();
+}
+
+
+// ── Init ──────────────────────────────────────────────────────
+async function init() {
+  // Show redirect URI for config note
+  document.getElementById('redirect-display').textContent = getRedirectUri();
+
+  if (ARCGIS_CLIENT_ID === 'YOUR_CLIENT_ID_HERE') {
+    document.getElementById('config-note').style.display = 'flex';
+  }
+
+  // Check for token in URL hash (post-OAuth redirect)
+  const { access_token, username: uname } = parseTokenFromHash();
+  if (access_token) {
+    token    = access_token;
+    username = uname;
+    // Clean hash from URL
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+    sessionStorage.setItem('rvs_token', token);
+    sessionStorage.setItem('rvs_user',  username || '');
+  } else {
+    // Check session storage
+    const cached = sessionStorage.getItem('rvs_token');
+    if (cached) {
+      token    = cached;
+      username = sessionStorage.getItem('rvs_user') || '';
+    }
+  }
+
+  if (token) {
+    // Verify token is still valid by fetching self info
+    try {
+      const fullName = await getSelfInfo(token);
+      username = fullName || username;
+      sessionStorage.setItem('rvs_user', username);
+    } catch(_) { /* use cached name */ }
+
+    updateAuthUI();
+    document.getElementById('auth-gate').style.display  = 'none';
+    document.getElementById('dashboard').style.display  = '';
+
+    // Populate states
+    try {
+      const states = await fetchStates();
+      const sel = document.getElementById('state-select');
+      sel.innerHTML = '<option value="">— All States —</option>'
+        + states.map(s => `<option value="${s}">${s}</option>`).join('');
+    } catch(e) {
+      console.error('Failed to fetch states', e);
+    }
+
+    loadData();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
