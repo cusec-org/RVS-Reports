@@ -490,7 +490,15 @@ function handleAuth() {
     + `&response_type=token`
     + `&redirect_uri=${encodeURIComponent(getRedirectUri())}`
     + `&expiration=120`;
-  window.location.href = authUrl;
+
+  // Open in a popup so the OAuth redirect doesn't navigate the iframe itself
+  // (which Experience Builder blocks). The popup posts the token back here.
+  const popup = window.open(authUrl, 'arcgis_auth',
+    'width=600,height=700,resizable=yes,scrollbars=yes');
+  if (!popup) {
+    // Fallback: if popups are blocked, navigate directly
+    window.location.href = authUrl;
+  }
 }
 
 function parseTokenFromHash() {
@@ -779,12 +787,22 @@ async function init() {
     document.getElementById('config-note').style.display = 'flex';
   }
 
-  // Check for token in URL hash (post-OAuth redirect)
+  // Check for token in URL hash (post-OAuth redirect).
+  // When running inside an iframe the OAuth redirect lands in the popup window,
+  // not the iframe itself. The popup sends the token via postMessage then closes.
   const { access_token, username: uname } = parseTokenFromHash();
   if (access_token) {
+    if (window.opener) {
+      // We are the popup — forward token to the opener and close
+      window.opener.postMessage(
+        { type: 'arcgis_token', access_token, username: uname },
+        window.location.origin
+      );
+      window.close();
+      return;
+    }
     token    = access_token;
     username = uname;
-    // Clean hash from URL
     history.replaceState(null, '', window.location.pathname + window.location.search);
     sessionStorage.setItem('rvs_token', token);
     sessionStorage.setItem('rvs_user',  username || '');
@@ -796,6 +814,23 @@ async function init() {
       username = sessionStorage.getItem('rvs_user') || '';
     }
   }
+
+  // Listen for token posted back from the popup
+  window.addEventListener('message', async (e) => {
+    if (e.origin !== window.location.origin) return;
+    if (e.data?.type !== 'arcgis_token') return;
+    token    = e.data.access_token;
+    username = e.data.username || '';
+    sessionStorage.setItem('rvs_token', token);
+    sessionStorage.setItem('rvs_user',  username);
+    if (username === '') {
+      try { username = await getSelfInfo(token); } catch(_) {}
+    }
+    updateAuthUI();
+    document.getElementById('auth-gate').style.display  = 'none';
+    document.getElementById('dashboard').style.display  = '';
+    loadData();
+  });
 
   if (token) {
     // Verify token is still valid by fetching self info
