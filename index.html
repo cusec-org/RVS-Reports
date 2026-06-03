@@ -7,7 +7,6 @@
 <style>
   /* ── Reset & tokens ──────────────────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
     --red:       #c8102e;
     --red-dark:  #9e0c24;
@@ -27,14 +26,12 @@
     --shadow:    0 1px 4px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
     --shadow-sm: 0 1px 3px rgba(0,0,0,.07);
   }
-
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: var(--surface);
     color: var(--text);
     min-height: 100vh;
   }
-
   /* ── Header ──────────────────────────────────────────────── */
   header {
     background: var(--navy);
@@ -73,10 +70,8 @@
     color: #6ee7b7;
   }
   #user-name { font-size: 13px; color: rgba(255,255,255,.65); }
-
   /* ── Layout ──────────────────────────────────────────────── */
   main { max-width: 1200px; margin: 0 auto; padding: 24px 20px 48px; }
-
   /* ── Filter bar ──────────────────────────────────────────── */
   .filter-bar {
     background: var(--card);
@@ -106,8 +101,6 @@
   }
   select:focus { outline: none; border-color: var(--blue); }
   select:disabled { opacity: .45; cursor: not-allowed; }
-
-
   #refresh-btn {
     margin-left: auto;
     padding: 8px 18px;
@@ -126,7 +119,6 @@
   #refresh-btn svg { animation: none; }
   #refresh-btn.loading svg { animation: spin .7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
   /* ── Auth gate ───────────────────────────────────────────── */
   #auth-gate {
     text-align: center;
@@ -149,7 +141,6 @@
     transition: background .15s;
   }
   #auth-gate button:hover { background: var(--red-dark); }
-
   /* ── Stats grid ──────────────────────────────────────────── */
   .stats-section { margin-bottom: 28px; }
   .stats-section h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--text-2); margin-bottom: 12px; }
@@ -183,10 +174,8 @@
   .stat-card.dns .value { color: var(--text-3); }
   .stat-card.phase { --accent: var(--blue); }
   .stat-card.facility { --accent: var(--red); }
-
   .skeleton .value { background: var(--border); color: transparent; border-radius: 4px; }
   .skeleton .label { background: var(--surface); color: transparent; border-radius: 3px; }
-
   .stat-card.healthcare-combined {
     --accent: #0891b2;
     background: #f0f9ff;
@@ -199,7 +188,6 @@
     font-size: 11px; color: #0369a1; opacity: .8; margin-top: 4px;
   }
   .healthcare-breakdown span { white-space: nowrap; }
-
   .stat-card.schools-combined {
     --accent: #7c3aed;
     background: #f5f3ff;
@@ -208,7 +196,6 @@
   .stat-card.schools-combined .label { font-size: 12px; font-weight: 600; color: #6d28d9; }
   .stat-card.schools-combined .value { font-size: 26px; color: #6d28d9; }
   .stat-card.schools-combined .healthcare-breakdown { color: #6d28d9; }
-
   .stat-card.community-combined {
     --accent: #059669;
     background: #ecfdf5;
@@ -217,7 +204,6 @@
   .stat-card.community-combined .label { font-size: 12px; font-weight: 600; color: #065f46; }
   .stat-card.community-combined .value { font-size: 26px; color: #065f46; }
   .stat-card.community-combined .healthcare-breakdown { color: #065f46; }
-
   /* ── Three-col dashboard layout ─────────────────────────── */
   .dashboard-body {
     display: grid;
@@ -229,7 +215,6 @@
   @media (max-width: 900px) {
     .dashboard-body { grid-template-columns: 1fr; }
   }
-
   .stats-col h2 {
     font-size: 11px; font-weight: 700; text-transform: uppercase;
     letter-spacing: .07em; color: var(--text-2); margin-bottom: 10px;
@@ -239,7 +224,6 @@
   }
   .stat-card { padding: 12px 14px; }
   .stat-card .value { font-size: 26px; }
-
   /* ── Report links ────────────────────────────────────────── */
   .reports-section h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-2); margin-bottom: 10px; }
   .reports-grid {
@@ -280,7 +264,6 @@
   .report-link:hover { background: var(--blue-lt); border-color: var(--blue); }
   .report-link svg { flex-shrink: 0; }
   .report-link.disabled { color: var(--text-3); pointer-events: none; opacity: .55; }
-
   /* ── Config note ─────────────────────────────────────────── */
   .config-note {
     background: #fffbeb;
@@ -293,7 +276,6 @@
     display: flex; align-items: flex-start; gap: 10px;
   }
   .config-note code { background: rgba(0,0,0,.07); border-radius: 3px; padding: 1px 5px; font-family: monospace; }
-
   /* ── Context label ───────────────────────────────────────── */
   .context-chip {
     display: inline-flex; align-items: center;
@@ -309,7 +291,6 @@
 </style>
 </head>
 <body>
-
 <header>
   <div class="logo">
     <img src="https://cusec.org/wp-content/uploads/cropped-cusec_logo_512-270x270.png" alt="CUSEC Logo">
@@ -320,24 +301,19 @@
     <button id="auth-btn" onclick="handleAuth()">Sign in with ArcGIS</button>
   </div>
 </header>
-
 <main id="main-content">
-
   <!-- Config warning if client_id not set -->
   <div class="config-note" id="config-note" style="display:none">
     ⚠️ Set your ArcGIS OAuth <strong>Client ID</strong> to enable sign-in. Open this file and change <code>ARCGIS_CLIENT_ID</code> near the top of the script, then register <code id="redirect-display"></code> as a redirect URI in your ArcGIS app settings.
   </div>
-
   <!-- Auth gate -->
   <div id="auth-gate">
     <h2>Sign in to access the dashboard</h2>
     <p>Your ArcGIS credentials are used to query the CUSEC RVS feature service.</p>
     <button onclick="handleAuth()">Sign in with ArcGIS Online</button>
   </div>
-
   <!-- Dashboard (hidden until authenticated) -->
   <div id="dashboard" style="display:none">
-
     <!-- Filter bar -->
     <div class="filter-bar">
       <div class="filter-group">
@@ -361,33 +337,26 @@
         Refresh
       </button>
     </div>
-
     <!-- Three-column body -->
     <div class="dashboard-body">
-
       <!-- Left: Phase stats -->
       <div class="stats-col">
         <h2>Survey Phase</h2>
         <div class="stats-grid" id="phase-grid"></div>
       </div>
-
       <!-- Center: Reports -->
       <div class="reports-section">
         <h2>Generate Reports</h2>
         <div class="reports-grid" id="reports-grid"></div>
       </div>
-
       <!-- Right: Essential Facilities -->
       <div class="stats-col">
         <h2>Essential Facilities <span style="font-weight:400;color:var(--green);text-transform:none;letter-spacing:0">(Complete)</span></h2>
         <div class="stats-grid" id="facility-grid"></div>
       </div>
-
     </div>
-
   </div>
 </main>
-
 <script>
 // ─────────────────────────────────────────────────────────────
 // CONFIGURATION — update ARCGIS_CLIENT_ID with your app's ID
@@ -397,11 +366,9 @@
 const ARCGIS_CLIENT_ID  = 'wABmvoplhiLmzBmi';
 const ARCGIS_PORTAL_URL = 'https://www.arcgis.com';
 const FEATURE_SERVICE   = 'https://services3.arcgis.com/mQsIDpmRUmYltsYD/ArcGIS/rest/services/CUSEC_RVS_All/FeatureServer/0';
-
 // Batch Combined Report — update item IDs to match your ArcGIS print templates
 const BATCH_P154_ITEM_ID          = 'f230e33babf54301a0c2cabdf94ff09a';
 const BATCH_NONSTRUCTURAL_ITEM_ID = 'f230e33babf54301a0c2cabdf94ff09a';
-
 // Report endpoint map
 const REPORTS = [
   {
@@ -460,25 +427,32 @@ const REPORTS = [
     extraParams: () => ({ p154_itemid: BATCH_P154_ITEM_ID, nonstructural_itemid: BATCH_NONSTRUCTURAL_ITEM_ID }),
   },
 ];
-
 const PHASE_ORDER    = ['Prepopulate','Field','Post Data Collection','QA/QC','Engineer Review','Complete','DNS'];
 const FACILITY_ORDER = ['Emergency Operations Centers','Fire/Emergency Medical','Government Admin. Offices','Hospitals','Law Enforcement','Medical Offices/Clinics','Nursing Homes','Schools','Universities','Utility/Public Works','Other'];
 const PHASE_FIELD    = 'Phase';
 const FACILITY_FIELD = 'EssentialFacility';
-
 // ── State ────────────────────────────────────────────────────
 let token    = null;
 let username = null;
-// scope is derived automatically: county selected → 'county', otherwise 'statewide'
 function getScope() { return selCounty ? 'county' : 'statewide'; }
 let selState  = '';
 let selCounty = '';
+
+// ── iframe detection ──────────────────────────────────────────
+// Returns true when the app is embedded (e.g. Experience Builder).
+function isInIframe() {
+  try { return window.self !== window.top; } catch { return true; }
+}
 
 // ── OAuth helpers ─────────────────────────────────────────────
 function getRedirectUri() {
   return window.location.href.split('#')[0].split('?')[0];
 }
 
+// handleAuth — opens a popup when embedded so the OAuth redirect
+// never navigates the iframe itself (Experience Builder blocks that).
+// IMPORTANT: window.open() must be called synchronously in the same
+// tick as the user click, or the browser will block the popup.
 function handleAuth() {
   if (token) { signOut(); return; }
   if (ARCGIS_CLIENT_ID === 'YOUR_CLIENT_ID_HERE') {
@@ -491,12 +465,24 @@ function handleAuth() {
     + `&redirect_uri=${encodeURIComponent(getRedirectUri())}`
     + `&expiration=120`;
 
-  // Open in a popup so the OAuth redirect doesn't navigate the iframe itself
-  // (which Experience Builder blocks). The popup posts the token back here.
-  const popup = window.open(authUrl, 'arcgis_auth',
-    'width=600,height=700,resizable=yes,scrollbars=yes');
-  if (!popup) {
-    // Fallback: if popups are blocked, navigate directly
+  if (isInIframe()) {
+    // Open a popup (top-level browser context) so the OAuth redirect
+    // doesn't try to navigate the iframe. The popup lands back on this
+    // same page URL with the token in the hash, detects window.opener,
+    // posts the token here, then closes itself.
+    const w = 540, h = 700;
+    const left = Math.max(0, (screen.width  - w) / 2);
+    const top  = Math.max(0, (screen.height - h) / 2);
+    const popup = window.open(
+      authUrl, 'rvs_oauth',
+      `width=${w},height=${h},left=${left},top=${top},toolbar=0,menubar=0,scrollbars=1`
+    );
+    if (!popup) {
+      alert('Sign-in popup was blocked. Please allow popups for this site, then try again.');
+    }
+    // Token arrives via postMessage — see listener in init().
+  } else {
+    // Standalone tab — redirect normally.
     window.location.href = authUrl;
   }
 }
@@ -509,13 +495,11 @@ function parseTokenFromHash() {
     username:     params.get('username'),
   };
 }
-
 async function getSelfInfo(tok) {
   const r = await fetch(`${ARCGIS_PORTAL_URL}/sharing/rest/community/self?f=json&token=${tok}`);
   const j = await r.json();
   return j.fullName || j.username || '';
 }
-
 function signOut() {
   token = null; username = null;
   sessionStorage.removeItem('rvs_token');
@@ -524,7 +508,6 @@ function signOut() {
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('auth-gate').style.display  = '';
 }
-
 function updateAuthUI() {
   const btn  = document.getElementById('auth-btn');
   const name = document.getElementById('user-name');
@@ -538,7 +521,6 @@ function updateAuthUI() {
     name.textContent = '';
   }
 }
-
 // ── Feature service queries ───────────────────────────────────
 async function queryFS(params) {
   const url = `${FEATURE_SERVICE}/query`;
@@ -548,7 +530,6 @@ async function queryFS(params) {
   if (j.error) throw new Error(j.error.message);
   return j;
 }
-
 async function fetchStates() {
   const j = await queryFS({
     where: '1=1',
@@ -559,7 +540,6 @@ async function fetchStates() {
   });
   return j.features.map(f => f.attributes.State).filter(Boolean).sort();
 }
-
 async function fetchCounties(state) {
   const j = await queryFS({
     where: `State='${state.replace(/'/g,"''")}'`,
@@ -570,7 +550,6 @@ async function fetchCounties(state) {
   });
   return j.features.map(f => f.attributes.County).filter(Boolean).sort();
 }
-
 async function fetchGroupStats(field, where) {
   const j = await queryFS({
     where,
@@ -587,7 +566,6 @@ async function fetchGroupStats(field, where) {
   });
   return map;
 }
-
 // ── Build WHERE clause ────────────────────────────────────────
 function buildWhere() {
   const parts = [];
@@ -595,7 +573,6 @@ function buildWhere() {
   if (selCounty) parts.push(`County='${selCounty.replace(/'/g,"''")}'`);
   return parts.length ? parts.join(' AND ') : '1=1';
 }
-
 // ── Render helpers ────────────────────────────────────────────
 function statCard(label, value, cls) {
   return `<div class="stat-card ${cls}">
@@ -603,20 +580,17 @@ function statCard(label, value, cls) {
     <div class="value">${Number(value).toLocaleString()}</div>
   </div>`;
 }
-
 function skeletonGrid(n) {
   return Array.from({length:n}, () =>
     `<div class="stat-card skeleton"><div class="label">███████</div><div class="value">———</div></div>`
   ).join('');
 }
-
 function renderPhase(counts) {
   return PHASE_ORDER.map(p => {
     const cls = p === 'Complete' ? 'phase complete' : p === 'DNS' ? 'phase dns' : 'phase';
     return statCard(p, counts[p] ?? 0, cls);
   }).join('');
 }
-
 function combinedCard(label, total, breakdown, cls) {
   const rows = breakdown.map(([k,v]) =>
     `<span>${k}: ${Number(v).toLocaleString()}</span>`).join('');
@@ -626,15 +600,11 @@ function combinedCard(label, total, breakdown, cls) {
     <div class="healthcare-breakdown">${rows}</div>
   </div>`;
 }
-
 function renderFacility(counts) {
   const c = k => counts[k] ?? 0;
-
   const healthcareTotal   = c('Hospitals') + c('Medical Offices/Clinics') + c('Nursing Homes');
   const schoolsTotal      = c('Schools') + c('Universities');
   const communityTotal    = c('Government Admin. Offices') + c('Utility/Public Works') + c('Other');
-
-  // Order matches original dashboard: EOCs, Fire, Healthcare, Law Enforcement, Schools, Community Services
   return [
     statCard('Emergency Operations Centers', c('Emergency Operations Centers'), 'facility'),
     statCard('Fire/Emergency Medical',        c('Fire/Emergency Medical'),        'facility'),
@@ -655,20 +625,16 @@ function renderFacility(counts) {
     ], 'community-combined'),
   ].join('');
 }
-
 function buildReportUrl(base, st, co, isStatewide, extra = {}) {
   const params = new URLSearchParams({ state: st || '' });
   params.set('county', isStatewide ? 'Statewide' : (co || ''));
   Object.entries(extra).forEach(([k, v]) => { if (v) params.set(k, v); });
   return `${base}?${params}`;
 }
-
 function renderReports() {
   const isStatewide = getScope() === 'statewide';
   const st = selState;
   const co = selCounty;
-  const noState = !st;
-
   const grid = document.getElementById('reports-grid');
   grid.innerHTML = REPORTS.map(r => {
     const requiresCounty = !!r.extraParams;
@@ -676,25 +642,18 @@ function renderReports() {
     const repUrl   = (r.report && st && (!requiresCounty || co))
       ? buildReportUrl(r.report, st, co, isStatewide, r.extraParams ? r.extraParams() : {})
       : null;
-
     const sheetIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
     const repIcon  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>`;
-
     const sheetLink = !r.spreadsheet ? '' : sheetUrl
       ? `<a href="${sheetUrl}" target="_blank" rel="noopener" class="report-link">${sheetIcon} Spreadsheet</a>`
       : `<span class="report-link disabled">${sheetIcon} Select a state first</span>`;
-
-    const reportDisabledMsg = requiresCounty && st && !co
-      ? 'Select a county first'
-      : 'Select a state first';
+    const reportDisabledMsg = requiresCounty && st && !co ? 'Select a county first' : 'Select a state first';
     const reportLink = r.report
       ? (repUrl
           ? `<a href="${repUrl}" target="_blank" rel="noopener" class="report-link">${repIcon} Document Report</a>`
           : `<span class="report-link disabled">${repIcon} ${reportDisabledMsg}</span>`)
       : '';
-
     const inline = r.report ? 'inline' : '';
-
     return `<div class="report-card">
       <div class="report-title">
         <div class="report-icon" style="background:${r.bg};color:${r.color};font-size:16px">${r.icon}</div>
@@ -707,7 +666,6 @@ function renderReports() {
     </div>`;
   }).join('');
 }
-
 // ── Context label ─────────────────────────────────────────────
 function updateContextLabel() {
   const el = document.getElementById('context-label');
@@ -718,24 +676,18 @@ function updateContextLabel() {
     el.textContent = `${selState} — ${selCounty} County`;
   }
 }
-
 // ── Main data load ────────────────────────────────────────────
 async function loadData() {
   const btn = document.getElementById('refresh-btn');
   btn.disabled = true;
   btn.classList.add('loading');
-
   const where = buildWhere();
-
-  // show skeletons
   document.getElementById('phase-grid').innerHTML    = skeletonGrid(7);
   document.getElementById('facility-grid').innerHTML = skeletonGrid(6);
-
   try {
     const facilityWhere = where === '1=1'
       ? `${PHASE_FIELD}='Complete'`
       : `${where} AND ${PHASE_FIELD}='Complete'`;
-
     const [phaseStats, facilityStats] = await Promise.all([
       fetchGroupStats(PHASE_FIELD,    where),
       fetchGroupStats(FACILITY_FIELD, facilityWhere),
@@ -746,13 +698,11 @@ async function loadData() {
     document.getElementById('phase-grid').innerHTML    = `<div style="color:red;font-size:13px;grid-column:1/-1">Error: ${e.message}</div>`;
     document.getElementById('facility-grid').innerHTML = '';
   }
-
   renderReports();
   updateContextLabel();
   btn.disabled = false;
   btn.classList.remove('loading');
 }
-
 // ── Dropdown change handlers ──────────────────────────────────
 async function onStateChange() {
   selState  = document.getElementById('state-select').value;
@@ -760,7 +710,6 @@ async function onStateChange() {
   const countySelect = document.getElementById('county-select');
   countySelect.disabled = true;
   countySelect.innerHTML = '<option value="">Loading…</option>';
-
   if (selState) {
     const counties = await fetchCounties(selState);
     countySelect.innerHTML = '<option value="">— All Counties —</option>'
@@ -771,93 +720,94 @@ async function onStateChange() {
   }
   loadData();
 }
-
 function onCountyChange() {
   selCounty = document.getElementById('county-select').value;
   loadData();
 }
 
+// ── Shared sign-in completion ─────────────────────────────────
+async function completeSignIn(tok, uname) {
+  token    = tok;
+  username = uname || '';
+  sessionStorage.setItem('rvs_token', token);
+  sessionStorage.setItem('rvs_user',  username);
+  try {
+    const fullName = await getSelfInfo(token);
+    username = fullName || username;
+    sessionStorage.setItem('rvs_user', username);
+  } catch(_) {}
+  updateAuthUI();
+  document.getElementById('auth-gate').style.display  = 'none';
+  document.getElementById('dashboard').style.display  = '';
+  try {
+    const states = await fetchStates();
+    const sel = document.getElementById('state-select');
+    sel.innerHTML = '<option value="">— All States —</option>'
+      + states.map(s => `<option value="${s}">${s}</option>`).join('');
+  } catch(e) { console.error('Failed to fetch states', e); }
+  loadData();
+}
 
 // ── Init ──────────────────────────────────────────────────────
 async function init() {
-  // Show redirect URI for config note
   document.getElementById('redirect-display').textContent = getRedirectUri();
-
   if (ARCGIS_CLIENT_ID === 'YOUR_CLIENT_ID_HERE') {
     document.getElementById('config-note').style.display = 'flex';
   }
 
-  // Check for token in URL hash (post-OAuth redirect).
-  // When running inside an iframe the OAuth redirect lands in the popup window,
-  // not the iframe itself. The popup sends the token via postMessage then closes.
+  // ── Popup branch ──────────────────────────────────────────
+  // If we're the popup window that ArcGIS redirected back to,
+  // post the token to the opener (the embedded app) and close.
   const { access_token, username: uname } = parseTokenFromHash();
-  if (access_token) {
-    if (window.opener) {
-      // We are the popup — forward token to the opener and close
+  if (access_token && window.opener && window.opener !== window) {
+    try {
       window.opener.postMessage(
-        { type: 'arcgis_token', access_token, username: uname },
+        { type: 'rvs_oauth', access_token, username: uname },
         window.location.origin
       );
-      window.close();
-      return;
-    }
-    token    = access_token;
-    username = uname;
-    history.replaceState(null, '', window.location.pathname + window.location.search);
-    sessionStorage.setItem('rvs_token', token);
-    sessionStorage.setItem('rvs_user',  username || '');
-  } else {
-    // Check session storage
-    const cached = sessionStorage.getItem('rvs_token');
-    if (cached) {
-      token    = cached;
-      username = sessionStorage.getItem('rvs_user') || '';
-    }
+    } catch(e) { console.error('postMessage failed:', e); }
+    setTimeout(() => { try { window.close(); } catch {} }, 50);
+    document.body.innerHTML = '<div style="font-family:system-ui,sans-serif;padding:40px;text-align:center;color:#333">Sign-in complete. You can close this window.</div>';
+    return;
   }
 
-  // Listen for token posted back from the popup
+  // ── Listen for token posted back from popup ───────────────
   window.addEventListener('message', async (e) => {
     if (e.origin !== window.location.origin) return;
-    if (e.data?.type !== 'arcgis_token') return;
-    token    = e.data.access_token;
-    username = e.data.username || '';
-    sessionStorage.setItem('rvs_token', token);
-    sessionStorage.setItem('rvs_user',  username);
-    if (username === '') {
-      try { username = await getSelfInfo(token); } catch(_) {}
-    }
-    updateAuthUI();
-    document.getElementById('auth-gate').style.display  = 'none';
-    document.getElementById('dashboard').style.display  = '';
-    loadData();
+    if (!e.data || e.data.type !== 'rvs_oauth') return;
+    await completeSignIn(e.data.access_token, e.data.username);
   });
 
-  if (token) {
-    // Verify token is still valid by fetching self info
+  // ── Normal (non-popup) token handling ────────────────────
+  if (access_token) {
+    // Standalone redirect — token landed directly in this page's hash
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+    await completeSignIn(access_token, uname);
+    return;
+  }
+
+  // Check session storage for a cached token
+  const cached = sessionStorage.getItem('rvs_token');
+  if (cached) {
+    token    = cached;
+    username = sessionStorage.getItem('rvs_user') || '';
     try {
       const fullName = await getSelfInfo(token);
       username = fullName || username;
       sessionStorage.setItem('rvs_user', username);
-    } catch(_) { /* use cached name */ }
-
+    } catch(_) {}
     updateAuthUI();
     document.getElementById('auth-gate').style.display  = 'none';
     document.getElementById('dashboard').style.display  = '';
-
-    // Populate states
     try {
       const states = await fetchStates();
       const sel = document.getElementById('state-select');
       sel.innerHTML = '<option value="">— All States —</option>'
         + states.map(s => `<option value="${s}">${s}</option>`).join('');
-    } catch(e) {
-      console.error('Failed to fetch states', e);
-    }
-
+    } catch(e) { console.error('Failed to fetch states', e); }
     loadData();
   }
 }
-
 init();
 </script>
 </body>
