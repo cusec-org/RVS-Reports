@@ -496,7 +496,12 @@ function parseTokenFromHash() {
   };
 }
 async function getSelfInfo(tok) {
-  const r = await fetch(`${ARCGIS_PORTAL_URL}/sharing/rest/community/self?f=json&token=${tok}`);
+  // POST the token in the body (not the URL) so it doesn't leak into
+  // browser history, server logs, or the Referer header.
+  const r = await fetch(`${ARCGIS_PORTAL_URL}/sharing/rest/community/self`, {
+    method: 'POST',
+    body: new URLSearchParams({ f: 'json', token: tok }),
+  });
   const j = await r.json();
   // ArcGIS returns HTTP 200 with an {error} body for an expired/invalid
   // token, so we must check the payload — not just rely on fetch throwing.
@@ -577,6 +582,12 @@ function buildWhere() {
   return parts.length ? parts.join(' AND ') : '1=1';
 }
 // ── Render helpers ────────────────────────────────────────────
+// Escape a string before interpolating it into innerHTML, so service-
+// supplied values (state/county names) can't break markup or inject HTML.
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, ch =>
+    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+}
 function statCard(label, value, cls) {
   return `<div class="stat-card ${cls}">
     <div class="label">${label}</div>
@@ -698,7 +709,14 @@ async function loadData() {
     document.getElementById('phase-grid').innerHTML    = renderPhase(phaseStats);
     document.getElementById('facility-grid').innerHTML = renderFacility(facilityStats);
   } catch(e) {
-    document.getElementById('phase-grid').innerHTML    = `<div style="color:red;font-size:13px;grid-column:1/-1">Error: ${e.message}</div>`;
+    // Build the error node with textContent so a service-supplied message
+    // can't inject HTML (it's rendered as text, never parsed as markup).
+    const errEl = document.createElement('div');
+    errEl.style.cssText = 'color:red;font-size:13px;grid-column:1/-1';
+    errEl.textContent = `Error: ${e.message}`;
+    const phaseGrid = document.getElementById('phase-grid');
+    phaseGrid.innerHTML = '';
+    phaseGrid.appendChild(errEl);
     document.getElementById('facility-grid').innerHTML = '';
   }
   renderReports();
@@ -712,12 +730,19 @@ async function onStateChange() {
   selCounty = '';
   const countySelect = document.getElementById('county-select');
   countySelect.disabled = true;
-  countySelect.innerHTML = '<option value="">Loading…</option>';
   if (selState) {
-    const counties = await fetchCounties(selState);
-    countySelect.innerHTML = '<option value="">— All Counties —</option>'
-      + counties.map(c => `<option value="${c}">${c}</option>`).join('');
-    countySelect.disabled = false;
+    countySelect.innerHTML = '<option value="">Loading…</option>';
+    try {
+      const counties = await fetchCounties(selState);
+      countySelect.innerHTML = '<option value="">— All Counties —</option>'
+        + counties.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      countySelect.disabled = false;
+    } catch (e) {
+      // Don't leave the dropdown stuck on "Loading…" — surface the failure.
+      // Re-selecting the state retries. Statewide data still loads below.
+      console.error('Failed to fetch counties', e);
+      countySelect.innerHTML = '<option value="">— Could not load counties —</option>';
+    }
   } else {
     countySelect.innerHTML = '<option value="">— Select state first —</option>';
   }
@@ -729,6 +754,20 @@ function onCountyChange() {
 }
 
 // ── Shared sign-in completion ─────────────────────────────────
+// Reveal the dashboard, populate the state dropdown, and load data.
+// Shared by fresh sign-in (completeSignIn) and cached-token restore.
+async function enterDashboard() {
+  updateAuthUI();
+  document.getElementById('auth-gate').style.display  = 'none';
+  document.getElementById('dashboard').style.display  = '';
+  try {
+    const states = await fetchStates();
+    const sel = document.getElementById('state-select');
+    sel.innerHTML = '<option value="">— All States —</option>'
+      + states.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+  } catch(e) { console.error('Failed to fetch states', e); }
+  loadData();
+}
 async function completeSignIn(tok, uname) {
   token    = tok;
   username = uname || '';
@@ -739,16 +778,7 @@ async function completeSignIn(tok, uname) {
     username = fullName || username;
     sessionStorage.setItem('rvs_user', username);
   } catch(_) {}
-  updateAuthUI();
-  document.getElementById('auth-gate').style.display  = 'none';
-  document.getElementById('dashboard').style.display  = '';
-  try {
-    const states = await fetchStates();
-    const sel = document.getElementById('state-select');
-    sel.innerHTML = '<option value="">— All States —</option>'
-      + states.map(s => `<option value="${s}">${s}</option>`).join('');
-  } catch(e) { console.error('Failed to fetch states', e); }
-  loadData();
+  await enterDashboard();
 }
 
 // ── Init ──────────────────────────────────────────────────────
@@ -806,16 +836,7 @@ async function init() {
     token    = cached;
     username = fullName || sessionStorage.getItem('rvs_user') || '';
     sessionStorage.setItem('rvs_user', username);
-    updateAuthUI();
-    document.getElementById('auth-gate').style.display  = 'none';
-    document.getElementById('dashboard').style.display  = '';
-    try {
-      const states = await fetchStates();
-      const sel = document.getElementById('state-select');
-      sel.innerHTML = '<option value="">— All States —</option>'
-        + states.map(s => `<option value="${s}">${s}</option>`).join('');
-    } catch(e) { console.error('Failed to fetch states', e); }
-    loadData();
+    await enterDashboard();
   }
 }
 init();
