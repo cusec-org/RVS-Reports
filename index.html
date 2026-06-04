@@ -498,6 +498,9 @@ function parseTokenFromHash() {
 async function getSelfInfo(tok) {
   const r = await fetch(`${ARCGIS_PORTAL_URL}/sharing/rest/community/self?f=json&token=${tok}`);
   const j = await r.json();
+  // ArcGIS returns HTTP 200 with an {error} body for an expired/invalid
+  // token, so we must check the payload — not just rely on fetch throwing.
+  if (j.error) throw new Error(j.error.message || 'Invalid token');
   return j.fullName || j.username || '';
 }
 function signOut() {
@@ -789,13 +792,20 @@ async function init() {
   // Check session storage for a cached token
   const cached = sessionStorage.getItem('rvs_token');
   if (cached) {
-    token    = cached;
-    username = sessionStorage.getItem('rvs_user') || '';
+    // Validate the cached token BEFORE revealing the dashboard. ArcGIS
+    // tokens expire (expiration=120 min), so a cached token may be stale.
+    // getSelfInfo throws on an invalid/expired token — treat that as
+    // "not signed in", clear the stale credentials, and keep the auth gate.
+    let fullName;
     try {
-      const fullName = await getSelfInfo(token);
-      username = fullName || username;
-      sessionStorage.setItem('rvs_user', username);
-    } catch(_) {}
+      fullName = await getSelfInfo(cached);
+    } catch(_) {
+      signOut();
+      return;
+    }
+    token    = cached;
+    username = fullName || sessionStorage.getItem('rvs_user') || '';
+    sessionStorage.setItem('rvs_user', username);
     updateAuthUI();
     document.getElementById('auth-gate').style.display  = 'none';
     document.getElementById('dashboard').style.display  = '';
